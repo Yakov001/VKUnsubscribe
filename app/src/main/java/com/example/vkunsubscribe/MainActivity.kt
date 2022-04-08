@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
 
         mainButton.setOnClickListener {
             viewModel.unsubscribeFromSelected()
+            viewModel.currentGroups.value?.let { adapter.setData(it) }
         }
 
     }
@@ -67,11 +68,11 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
             GroupsService().groupsGetExtended(userId = viewModel.userId.value),
             object : VKApiCallback<GroupsGetObjectExtendedResponse> {
                 override fun success(result: GroupsGetObjectExtendedResponse) {
-                    viewModel.groupsGetResponse.value = result
+                    viewModel.currentGroups.value = result.items.toMutableList()
                     /*for (i in result.items) {
 
                     }*/
-                    adapter.setData(result)
+                    adapter.setData(result.items.toMutableList())
                 }
                 override fun fail(error: Exception) {
 
