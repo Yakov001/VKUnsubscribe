@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        VK.login(this, arrayListOf(VKScope.WALL, VKScope.PHOTOS))
+        VK.login(this, arrayListOf(VKScope.GROUPS))
         val mainButton : Button = findViewById(R.id.button)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
