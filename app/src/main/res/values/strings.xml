@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">VK Unsubscribe</string>
+    <string name="unsubscribe_button">Отписаться</string>
     <integer name="com_vk_sdk_AppId">8129820</integer>
 </resources>

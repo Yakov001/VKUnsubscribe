@@ -5,7 +5,8 @@
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:gravity="top"
     android:padding="20dp"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:layout_centerHorizontal="true">
 
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/group_image"
