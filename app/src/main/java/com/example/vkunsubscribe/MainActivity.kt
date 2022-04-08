@@ -24,11 +24,12 @@ import com.vk.sdk.api.friends.FriendsService
 import com.vk.sdk.api.groups.GroupsService
 import com.vk.sdk.api.groups.dto.GroupsGetObjectExtendedResponse
 import com.vk.sdk.api.groups.dto.GroupsGetResponse
+import com.vk.sdk.api.groups.dto.GroupsGroupFull
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener {
 
-    private val adapter by lazy { GroupsAdapter() }
-    val viewModel: MainViewModel by viewModels()
+    private val adapter by lazy { GroupsAdapter(listener = this) }
+    private val viewModel: MainViewModel by viewModels()
     lateinit var userId : UserId
     lateinit var groupsGetResponse: GroupsGetObjectExtendedResponse
 
@@ -42,6 +43,11 @@ class MainActivity : AppCompatActivity() {
             it.adapter = adapter
             it.layoutManager = GridLayoutManager(this, 3)
         }
+
+        viewModel.selectedGroups.observe(this, {
+            viewModel.nowSelecting.value = it.size > 0
+            adapter.updateSelectedGroups(it)
+        })
 
     }
 
@@ -78,5 +84,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
+    }
+
+    override fun onGroupSelected(group: GroupsGroupFull) {
+        viewModel.selectGroup(group)
+        adapter.updateItem(group)
     }
 }

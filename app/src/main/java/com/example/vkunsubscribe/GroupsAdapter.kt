@@ -10,8 +10,17 @@ import com.facebook.drawee.view.SimpleDraweeView
 import com.vk.sdk.api.groups.dto.GroupsGetObjectExtendedResponse
 import com.vk.sdk.api.groups.dto.GroupsGroupFull
 
-class GroupsAdapter(private var dataSet: GroupsGetObjectExtendedResponse? = null) :
+class GroupsAdapter(
+    private var dataSet: GroupsGetObjectExtendedResponse? = null,
+    private val listener: OnGroupSelectedListener
+) :
     RecyclerView.Adapter<GroupsAdapter.ViewHolder>() {
+
+    private var selectedGroups: MutableList<GroupsGroupFull> = mutableListOf()
+
+    interface OnGroupSelectedListener {
+        fun onGroupSelected(group: GroupsGroupFull)
+    }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val groupId : TextView = view.findViewById(R.id.group_id)
@@ -19,9 +28,17 @@ class GroupsAdapter(private var dataSet: GroupsGetObjectExtendedResponse? = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.recycler_view_item, parent, false)
-        return ViewHolder(view)
+        var view: View? = null
+        when (viewType) {
+            0 -> view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.recycler_view_item, parent, false)
+            1 -> {
+                view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.recycler_view_item_selected, parent, false)
+                view.isClickable = true
+            }
+        }
+        return ViewHolder(view!!)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -32,6 +49,10 @@ class GroupsAdapter(private var dataSet: GroupsGetObjectExtendedResponse? = null
             val uri = Uri.parse(it.items.get(position).photo200)
             holder.draweeView.setImageURI(uri)
         }
+
+        holder.itemView.setOnClickListener {
+            dataSet?.items?.get(position)?.let { listener.onGroupSelected(it) }
+        }
     }
 
     override fun getItemCount(): Int {
@@ -41,6 +62,18 @@ class GroupsAdapter(private var dataSet: GroupsGetObjectExtendedResponse? = null
     fun setData(dataSet: GroupsGetObjectExtendedResponse) {
         this.dataSet = dataSet
         notifyDataSetChanged()
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (selectedGroups.contains(dataSet?.items?.get(position))) 1 else 0
+    }
+
+    fun updateItem(group: GroupsGroupFull) {
+        notifyItemChanged(selectedGroups.indexOf(group))
+    }
+
+    fun updateSelectedGroups(selectedGroups: MutableList<GroupsGroupFull>) {
+        this.selectedGroups = selectedGroups
     }
 
 }

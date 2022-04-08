@@ -13,8 +13,8 @@
         android:layout_height="70dp"
         fresco:backgroundImage="@color/teal_700"
         fresco:roundedCornerRadius="9999dp"
-        fresco:roundingBorderColor="@color/grey"
-        fresco:roundingBorderWidth="1dp" />
+        fresco:roundingBorderWidth="4dp"
+        fresco:roundingBorderColor="@color/blue"/>
 
     <TextView
         android:id="@+id/group_id"
