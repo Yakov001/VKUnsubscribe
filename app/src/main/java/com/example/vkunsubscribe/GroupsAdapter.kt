@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.drawee.view.SimpleDraweeView
-import com.vk.sdk.api.groups.dto.GroupsGetObjectExtendedResponse
 import com.vk.sdk.api.groups.dto.GroupsGroupFull
 
 class GroupsAdapter(
@@ -42,7 +41,6 @@ class GroupsAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-//        holder.groupId.text = dataSet?.items?.get(position).toString()
 
         dataSet.let {
             holder.groupId.text = it.get(position).name
