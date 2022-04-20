@@ -20,7 +20,7 @@ class MainViewModel : ViewModel() {
     val deletedGroups: MutableLiveData<MutableList<GroupsGroupFull>> by lazy {
         MutableLiveData(mutableListOf())
     }
-    val switch: MutableLiveData<Boolean> = MutableLiveData(false)
+    val observingDeleted: MutableLiveData<Boolean> = MutableLiveData(false)
     var nowSelecting: MutableLiveData<Boolean> = MutableLiveData(false)
     var userId: MutableLiveData<UserId> = MutableLiveData()
 
@@ -37,10 +37,22 @@ class MainViewModel : ViewModel() {
     fun unsubscribeFromSelected() {
         selectedGroups.value?.let {
             for (group in it) {
-                /*VK.execute(
+                VK.execute(
                     GroupsService().groupsLeave(group.id)
-                )*/
+                )
                 currentGroups.value?.remove(group)
+            }
+        }
+        selectedGroups.value = mutableListOf()
+        nowSelecting.value = false
+    }
+
+    fun resubscribeToSelected() {
+        selectedGroups.value?.let {
+            for (group in it) {
+                VK.execute(
+                    GroupsService().groupsJoin(group.id)
+                )
             }
         }
         selectedGroups.value = mutableListOf()

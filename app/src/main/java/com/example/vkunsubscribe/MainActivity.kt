@@ -18,6 +18,7 @@ import com.vk.dto.common.id.UserId
 import com.vk.sdk.api.groups.GroupsService
 import com.vk.sdk.api.groups.dto.GroupsGetObjectExtendedResponse
 import com.vk.sdk.api.groups.dto.GroupsGroupFull
+import java.util.*
 
 class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener {
 
@@ -28,11 +29,10 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         VK.login(this, arrayListOf(VKScope.GROUPS))
-        val mainButton : Button = findViewById(R.id.button)
-        val changeButton : Button = findViewById(R.id.view_deleted_groups_button)
+        val mainButton: Button = findViewById(R.id.button)
+        val changeButton: Button = findViewById(R.id.view_deleted_groups_button)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
-        recyclerView.also {
+        findViewById<RecyclerView>(R.id.recycler_view).also {
             it.adapter = adapter
             it.layoutManager = GridLayoutManager(this, 3)
         }
@@ -44,18 +44,23 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
         })
 
         mainButton.setOnClickListener {
-            saveDeletedGroups()
-            viewModel.unsubscribeFromSelected()
-            viewModel.currentGroups.value?.let { adapter.setData(it) }
+            if (viewModel.observingDeleted.value == false) {
+                saveDeletedGroups()
+                viewModel.unsubscribeFromSelected()
+                viewModel.currentGroups.value?.let { adapter.setData(it) }
+            } else {
+                resubscribeToDeleted()
+            }
         }
 
         changeButton.setOnClickListener {
-            if (viewModel.switch.value == false) {
+            viewModel.selectedGroups.value = mutableListOf()
+            if (viewModel.observingDeleted.value == false) {
                 getDeletedGroups()
-                viewModel.switch.value = true
+                viewModel.observingDeleted.value = true
             } else {
                 viewModel.currentGroups.value?.let { adapter.setData(it) }
-                viewModel.switch.value = false
+                viewModel.observingDeleted.value = false
             }
         }
 
@@ -68,13 +73,16 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
                 getGroups()
             }
 
-            override fun onLoginFailed(authException: VKAuthException) {
-
-            }
+            override fun onLoginFailed(authException: VKAuthException) {}
         }
         if (data == null || !VK.onActivityResult(requestCode, resultCode, data, callback)) {
             super.onActivityResult(requestCode, resultCode, data)
         }
+    }
+
+    override fun onGroupSelected(group: GroupsGroupFull) {
+        viewModel.selectGroup(group)
+        adapter.updateItem(group)
     }
 
     fun getGroups() {
@@ -85,25 +93,20 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
                     viewModel.currentGroups.value = result.items.toMutableList()
                     adapter.setData(result.items.toMutableList())
                 }
-                override fun fail(error: Exception) {
-
-                }
+                override fun fail(error: Exception) {}
             }
         )
-    }
-
-    override fun onGroupSelected(group: GroupsGroupFull) {
-        viewModel.selectGroup(group)
-        adapter.updateItem(group)
     }
 
     private fun saveDeletedGroups() {
         val sp = getSharedPreferences("groups", Context.MODE_PRIVATE)
         sp.edit().putStringSet("groups", viewModel.selectedGroups.value?.map {
             it.id.value.toString()
-        }?.toMutableSet().also { sp.getStringSet("groups", setOf<String>())?.forEach { s ->
-            it?.add(s)
-        } }).apply()
+        }?.toMutableSet().also {
+            sp.getStringSet("groups", setOf<String>())?.forEach { s ->
+                it?.add(s)
+            }
+        }).apply()
     }
 
     private fun getDeletedGroups() {
@@ -112,7 +115,8 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
         val ids = groups?.let { set ->
             set.map {
                 UserId(it.toLong())
-            } }?.toList()
+            }
+        }?.toList()
         VK.execute(
             GroupsService().groupsGetById(ids),
             object : VKApiCallback<List<GroupsGroupFull>> {
@@ -125,5 +129,26 @@ class MainActivity : AppCompatActivity(), GroupsAdapter.OnGroupSelectedListener 
                 override fun fail(error: Exception) {}
             }
         )
+    }
+
+    private fun resubscribeToDeleted() {
+
+        // 1) delete selected groups from SP
+        // 2) add selected groups to currentGroups
+        viewModel.selectedGroups.value?.let { selGroups ->
+            // 1)
+            val sp = getSharedPreferences("groups", Context.MODE_PRIVATE)
+            val groups = mutableSetOf(*sp.getStringSet("groups", setOf<String>())!!.toTypedArray())
+            val groupsToResubscribe = selGroups.map { it.id.toString() }.toSet()
+            groups.removeAll(groupsToResubscribe)
+            sp.edit().putStringSet("groups", groups).apply()
+
+            // 2)
+            viewModel.currentGroups.value!!.addAll(selGroups)
+
+            viewModel.resubscribeToSelected()
+            viewModel.currentGroups.value?.let { adapter.setData(it) }
+            viewModel.observingDeleted.value = false
+        }
     }
 }
