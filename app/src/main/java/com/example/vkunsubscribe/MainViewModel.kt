@@ -22,7 +22,7 @@ class MainViewModel : ViewModel() {
     }
     val observingDeleted: MutableLiveData<Boolean> = MutableLiveData(false)
     var nowSelecting: MutableLiveData<Boolean> = MutableLiveData(false)
-    var userId: MutableLiveData<UserId> = MutableLiveData()
+    var userId: MutableLiveData<UserId?> = MutableLiveData(null)
 
     fun selectGroup(group: GroupsGroupFull) {
         if (selectedGroups.value?.contains(group) == true) {
